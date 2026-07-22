@@ -1,0 +1,2 @@
+-- SQL initialization placeholder.
+-- SQLAlchemy create_all handles first-time table creation on startup.
