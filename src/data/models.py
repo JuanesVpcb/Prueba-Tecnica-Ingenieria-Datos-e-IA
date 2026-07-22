@@ -34,17 +34,12 @@ class SaleRaw(Base):
 
 class MarketingSpendRaw(Base):
     __tablename__ = "marketing_spend_raw"
-    __table_args__ = (
-        UniqueConstraint("spend_date", "channel", "campaign_name", name="uq_spend_date_channel_campaign"),
-    )
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    spend_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
-    channel: Mapped[ChannelEnum] = mapped_column(SAEnum(ChannelEnum), nullable=False, index=True)
-    campaign_name: Mapped[str] = mapped_column(String(128), nullable=False)
-    campaign_cost: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
-    impressions: Mapped[int] = mapped_column(Integer, nullable=False)
-    clicks: Mapped[int] = mapped_column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False)
+    cliente: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    monto: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    fecha: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    canal_venta: Mapped[ChannelEnum] = mapped_column(SAEnum(ChannelEnum), nullable=False, index=True)
 
 
 class ChannelRateHistory(Base):

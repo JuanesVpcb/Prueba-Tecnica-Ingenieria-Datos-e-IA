@@ -1,3 +1,3 @@
 -- SQLAlchemy create_all maneja la creación de tablas.
--- Los datos iniciales de marketing se cargan desde migrations/MARKETING_A.sql
--- durante el startup de FastAPI para asegurar que la tabla exista antes de insertar.
+-- Los datos iniciales de marketing (1000 registros) se cargan desde migrations/MARKETING_A.sql
+-- en formato estandarizado: id, cliente, monto, fecha, canal_venta.

@@ -36,20 +36,18 @@ def default_marketing_source() -> list[dict]:
     today = date.today()
     return [
         {
-            "spend_date": today.isoformat(),
-            "channel": "FB Ads",
-            "campaign_name": "awareness",
-            "campaign_cost": "80.00",
-            "impressions": 10000,
-            "clicks": 450,
+            "id": 900001,
+            "cliente": "cliente_demo_1",
+            "monto": "80.00",
+            "fecha": today.isoformat(),
+            "canal_venta": "FB Ads",
         },
         {
-            "spend_date": today.isoformat(),
-            "channel": "google_ads",
-            "campaign_name": "intent",
-            "campaign_cost": "110.00",
-            "impressions": 8000,
-            "clicks": 370,
+            "id": 900002,
+            "cliente": "cliente_demo_2",
+            "monto": "110.00",
+            "fecha": today.isoformat(),
+            "canal_venta": "google_ads",
         },
     ]
 
@@ -110,29 +108,21 @@ def ingest_data(
     inserted_marketing = 0
     seen_marketing = set()
     for record in marketing_records:
-        key = (record.spend_date, normalize_channel(record.channel), record.campaign_name)
-        if key in seen_marketing:
+        if record.id in seen_marketing:
             continue
-        seen_marketing.add(key)
+        seen_marketing.add(record.id)
 
-        exists = session.scalar(
-            select(MarketingSpendRaw.id).where(
-                MarketingSpendRaw.spend_date == record.spend_date,
-                MarketingSpendRaw.channel == key[1],
-                MarketingSpendRaw.campaign_name == record.campaign_name,
-            )
-        )
+        exists = session.scalar(select(MarketingSpendRaw.id).where(MarketingSpendRaw.id == record.id))
         if exists:
             continue
 
         session.add(
             MarketingSpendRaw(
-                spend_date=record.spend_date,
-                channel=key[1],
-                campaign_name=record.campaign_name,
-                campaign_cost=record.campaign_cost,
-                impressions=record.impressions,
-                clicks=record.clicks,
+                id=record.id,
+                cliente=record.cliente,
+                monto=record.monto,
+                fecha=record.fecha,
+                canal_venta=normalize_channel(record.canal_venta),
             )
         )
         inserted_marketing += 1
@@ -161,12 +151,10 @@ def refresh_fact_table(session: Session) -> None:
 
     marketing_rows = session.execute(
         select(
-            MarketingSpendRaw.spend_date,
-            MarketingSpendRaw.channel,
-            func.sum(MarketingSpendRaw.campaign_cost).label("spend"),
-            func.sum(MarketingSpendRaw.impressions).label("impressions"),
-            func.sum(MarketingSpendRaw.clicks).label("clicks"),
-        ).group_by(MarketingSpendRaw.spend_date, MarketingSpendRaw.channel)
+            MarketingSpendRaw.fecha,
+            MarketingSpendRaw.canal_venta,
+            func.sum(MarketingSpendRaw.monto).label("spend"),
+        ).group_by(MarketingSpendRaw.fecha, MarketingSpendRaw.canal_venta)
     ).all()
 
     merged: dict[tuple[date, ChannelEnum], dict] = defaultdict(
@@ -187,10 +175,8 @@ def refresh_fact_table(session: Session) -> None:
         merged[key]["customers_acquired"] = int(row.customers or 0)
 
     for row in marketing_rows:
-        key = (row.spend_date, row.channel)
+        key = (row.fecha, row.canal_venta)
         merged[key]["total_spend"] = row.spend or Decimal("0")
-        merged[key]["impressions"] = int(row.impressions or 0)
-        merged[key]["clicks"] = int(row.clicks or 0)
 
     session.execute(delete(FactCampaignPerformance))
     for (perf_date, channel), values in merged.items():

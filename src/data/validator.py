@@ -50,32 +50,31 @@ class SaleRecord(BaseModel):
 
 
 class MarketingRecord(BaseModel):
-    spend_date: date
-    channel: str
-    campaign_name: str = Field(min_length=1)
-    campaign_cost: Decimal
-    impressions: int
-    clicks: int
+    id: int
+    cliente: str = Field(min_length=1)
+    monto: Decimal
+    fecha: date
+    canal_venta: str
 
-    @field_validator("campaign_cost")
+    @field_validator("id")
     @classmethod
-    def cost_must_be_non_negative(cls, value: Decimal) -> Decimal:
-        if value < 0:
-            raise ValueError("campaign_cost must be non-negative")
+    def id_positive(cls, value: int) -> int:
+        if value <= 0:
+            raise ValueError("id must be greater than zero")
         return value
 
-    @field_validator("spend_date")
+    @field_validator("monto")
     @classmethod
-    def spend_date_not_future(cls, value: date) -> date:
+    def monto_must_be_non_negative(cls, value: Decimal) -> Decimal:
+        if value < 0:
+            raise ValueError("monto must be non-negative")
+        return value
+
+    @field_validator("fecha")
+    @classmethod
+    def fecha_not_future(cls, value: date) -> date:
         if value > date.today():
-            raise ValueError("spend_date cannot be in the future")
-        return value
-
-    @field_validator("impressions", "clicks")
-    @classmethod
-    def metrics_non_negative(cls, value: int) -> int:
-        if value < 0:
-            raise ValueError("impressions/clicks must be non-negative")
+            raise ValueError("fecha cannot be in the future")
         return value
 
 

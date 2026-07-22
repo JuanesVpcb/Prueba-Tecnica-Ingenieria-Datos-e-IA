@@ -27,12 +27,11 @@ def test_ingest_deduplicates_and_builds_fact() -> None:
     ]
     marketing = [
         {
-            "spend_date": "2024-01-10",
-            "channel": "FB Ads",
-            "campaign_name": "camp-1",
-            "campaign_cost": "20",
-            "impressions": 100,
-            "clicks": 10,
+            "id": 1,
+            "cliente": "cliente-1",
+            "monto": "20",
+            "fecha": "2024-01-10",
+            "canal_venta": "FB Ads",
         }
     ]
 
@@ -57,9 +56,9 @@ def test_seed_marketing_from_sql_file(tmp_path) -> None:
     sql_file = tmp_path / "MARKETING_A.sql"
     sql_file.write_text(
         """
-INSERT INTO marketing_spend_raw (spend_date, channel, campaign_name, campaign_cost, impressions, clicks)
-VALUES ('2026-06-01', 'FACEBOOK', 'seed_campaign', 120.00, 5000, 250)
-ON CONFLICT (spend_date, channel, campaign_name) DO NOTHING;
+INSERT INTO marketing_spend_raw (id, cliente, monto, fecha, canal_venta)
+VALUES (1, 'cliente_seed', 120.00, '2026-06-01', 'FACEBOOK')
+ON CONFLICT (id) DO NOTHING;
         """.strip(),
         encoding="utf-8",
     )
