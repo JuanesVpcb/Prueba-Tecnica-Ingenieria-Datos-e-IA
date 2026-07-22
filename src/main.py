@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from src.ai.agent import InsightAgent
 from src.data.models import Base
-from src.data.pipeline import ingest_data
+from src.data.pipeline import ingest_data, seed_marketing_from_sql_file
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./app.db")
 
@@ -41,6 +41,8 @@ def get_db():
 @app.on_event("startup")
 def on_startup() -> None:
     Base.metadata.create_all(bind=engine)
+    with SessionLocal() as session:
+        seed_marketing_from_sql_file(session, "/app/migrations/MARKETING_A.sql")
 
 
 @app.post("/data/ingest")

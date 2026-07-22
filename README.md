@@ -31,6 +31,8 @@ ARCHITECTURE.md
 docker-compose up --build
 ```
 
+Al iniciar, la app crea tablas con SQLAlchemy y carga el seed `migrations/MARKETING_A.sql` (solo datos, sin DDL).
+
 ## Endpoints
 
 - `POST /data/ingest`: dispara ingesta + validación + consolidación histórica.

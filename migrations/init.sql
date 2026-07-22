@@ -1,2 +1,3 @@
--- SQL initialization placeholder.
--- SQLAlchemy create_all handles first-time table creation on startup.
+-- SQLAlchemy create_all maneja la creación de tablas.
+-- Los datos iniciales de marketing se cargan desde migrations/MARKETING_A.sql
+-- durante el startup de FastAPI para asegurar que la tabla exista antes de insertar.

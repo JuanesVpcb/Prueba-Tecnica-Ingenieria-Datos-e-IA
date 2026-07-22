@@ -3,8 +3,9 @@ from __future__ import annotations
 from collections import defaultdict
 from datetime import date
 from decimal import Decimal
+from pathlib import Path
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, select, text
 from sqlalchemy.orm import Session
 
 from src.data.models import ChannelEnum, ChannelRateHistory, FactCampaignPerformance, MarketingSpendRaw, SaleRaw
@@ -194,3 +195,19 @@ def refresh_fact_table(session: Session) -> None:
     session.execute(delete(FactCampaignPerformance))
     for (perf_date, channel), values in merged.items():
         session.add(FactCampaignPerformance(perf_date=perf_date, channel=channel, **values))
+
+
+def seed_marketing_from_sql_file(session: Session, sql_file_path: str) -> bool:
+    sql_path = Path(sql_file_path)
+    if not sql_path.exists():
+        return False
+
+    sql_text = sql_path.read_text(encoding="utf-8").strip()
+    if not sql_text:
+        return False
+
+    session.execute(text(sql_text))
+    session.commit()
+    refresh_fact_table(session)
+    session.commit()
+    return True
