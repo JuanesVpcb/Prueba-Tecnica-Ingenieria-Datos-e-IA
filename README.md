@@ -1,6 +1,7 @@
 # Insight-Extractor & History Tracker
 
 Implementación base de la prueba técnica **Data & AI Engineer** con:
+
 - Ingesta y gobernanza de datos (validación, homologación y deduplicación)
 - Modelo histórico en PostgreSQL con SQLAlchemy
 - Agente de IA con grafo de estados (LangGraph) y SQL de solo lectura

@@ -26,8 +26,8 @@ class ChatRequest(BaseModel):
 
 
 class IngestRequest(BaseModel):
-    sales_data: list[dict[str, Any]] | None = None
-    marketing_data: list[dict[str, Any]] | None = None
+    ventas_data: list[dict[str, Any]] | None = None
+    costos_data: list[dict[str, Any]] | None = None
 
 
 def get_db():
@@ -42,12 +42,12 @@ def get_db():
 def on_startup() -> None:
     Base.metadata.create_all(bind=engine)
     with SessionLocal() as session:
-        seed_marketing_from_sql_file(session, "/app/migrations/MARKETING_A.sql")
+        seed_marketing_from_sql_file(session, "/app/migrations/VENTAS_MARKETING.sql")
 
 
 @app.post("/data/ingest")
 async def data_ingest(payload: IngestRequest, db: Session = Depends(get_db)):
-    result = ingest_data(db, sales_data=payload.sales_data, marketing_data=payload.marketing_data)
+    result = ingest_data(db, ventas=payload.ventas_data, costos=payload.costos_data)
     return {"status": "ok", **result}
 
 
@@ -57,15 +57,15 @@ async def metrics(db: Session = Depends(get_db)):
         text(
             """
             SELECT
-                perf_date,
-                channel,
-                total_sales,
-                total_spend,
-                CASE WHEN total_spend = 0 THEN 0 ELSE ((total_sales - total_spend) / total_spend) END AS roi,
-                CASE WHEN customers_acquired = 0 THEN 0 ELSE (total_spend / customers_acquired) END AS cac,
-                CASE WHEN impressions = 0 THEN 0 ELSE (CAST(clicks AS FLOAT) / impressions) END AS conversion_rate
+                fecha,
+                canal_venta,
+                ventas,
+                costos,
+                CASE WHEN costos = 0 THEN 0 ELSE ((ventas - costos) / costos) END AS roi,
+                CASE WHEN nuevos_usuarios = 0 THEN 0 ELSE (costos / nuevos_usuarios) END AS cac,
+                CASE WHEN impresiones = 0 THEN 0 ELSE (CAST(clicks AS FLOAT) / impresiones) END AS conversion_rate
             FROM fact_campaign_performance
-            ORDER BY perf_date DESC, channel
+            ORDER BY fecha DESC, canal_venta ASC
             """
         )
     )

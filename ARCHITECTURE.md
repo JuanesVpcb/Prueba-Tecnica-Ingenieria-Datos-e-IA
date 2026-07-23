@@ -1,6 +1,7 @@
 # Arquitectura propuesta (GCP + Azure DevOps)
 
 ## Escalabilidad en GCP
+
 - **API/Agente**: desplegar FastAPI en **Cloud Run** (autoscaling, revisiones, rollback).
 - **Base transaccional/analítica inicial**: **Cloud SQL PostgreSQL** con usuario read-only para el agente.
 - **Analítica avanzada**: replicar históricos a **BigQuery** para consultas de alto volumen.
@@ -9,6 +10,7 @@
 - **IA empresarial**: mover el razonamiento a **Vertex AI** con observabilidad de prompts y seguridad.
 
 ## CI/CD en Azure DevOps
+
 1. **CI**:
    - `pytest` + chequeo de estilo.
    - Build de imagen Docker.
