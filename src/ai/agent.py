@@ -28,9 +28,10 @@ class InsightAgent:
 
     def _classify(self, state: AgentState) -> AgentState:
         text = state["user_input"].lower()
-        if any(token in text for token in ("actualiza", "ingesta", "refresh")):
+        if any(token in text for token in ("actualiza", "ingesta", "refresh", "sube", "carga", "update", "refresca")):
             intent = "update"
-        elif any(token in text for token in ("estrateg", "recomend", "roi", "cac", "conversion")):
+        elif any(token in text for token in ("estrateg", "recomend", "roi", "cac", "conversion", "retencion", "estadisticas", 
+                                             "analisis", "analiza", "analizar", "stats", "metricas", "metrics", "tasa", "rate")):
             intent = "analysis"
         else:
             intent = "data_query"
