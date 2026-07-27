@@ -40,7 +40,7 @@ docker compose build --no-cache app
 docker compose up -d app
 ```
 
-Al iniciar, la app crea tablas con SQLAlchemy y carga el seed `migrations/MARKETING_A.sql` (solo datos, sin DDL) con 1000 registros y el esquema estandarizado: `id`, `cliente`, `monto`, `fecha`, `canal_venta`.
+Al iniciar, la app crea tablas con SQLAlchemy y carga el seed `migrations/VENTAS_MARKETING.sql` (solo datos, sin DDL) con 1000 registros y el esquema estandarizado: `id`, `cliente`, `monto`, `fecha`, `canal_venta`.
 
 ## Endpoints
 
