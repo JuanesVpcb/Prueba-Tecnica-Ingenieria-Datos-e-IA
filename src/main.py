@@ -4,6 +4,7 @@ import os
 from typing import Any
 
 from fastapi import Depends, FastAPI
+from contextlib import asynccontextmanager
 from pydantic import BaseModel
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session, sessionmaker
@@ -38,11 +39,15 @@ def get_db():
         db.close()
 
 
-@app.on_event("startup")
-def on_startup() -> None:
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Crea las tablas si no existen y realiza la ingesta inicial de datos
     Base.metadata.create_all(bind=engine)
     with SessionLocal() as session:
         seed_marketing_from_sql_file(session, "/app/migrations/VENTAS_MARKETING.sql")
+    yield
+
+app.router.lifespan_context = lifespan
 
 
 @app.post("/data/ingest")
@@ -56,15 +61,23 @@ async def metrics(db: Session = Depends(get_db)):
     rows = db.execute(
         text(
             """
+            WITH kpis AS (
             SELECT
                 fecha,
                 canal_venta,
                 ventas,
                 costos,
+                impresiones,
+                clicks,
+                transacciones,
+                clientes,
                 CASE WHEN costos = 0 THEN 0 ELSE ((ventas - costos) / costos) END AS roi,
-                CASE WHEN nuevos_usuarios = 0 THEN 0 ELSE (costos / nuevos_usuarios) END AS cac,
-                CASE WHEN impresiones = 0 THEN 0 ELSE (CAST(clicks AS FLOAT) / impresiones) END AS conversion_rate
+                CASE WHEN clientes = 0 THEN 0 ELSE (costos / clientes) END AS cac,
+                CASE WHEN impresiones = 0 THEN 0 ELSE (CAST(clicks AS FLOAT) / impresiones) END AS tasa_cambio
             FROM fact_campaign_performance
+            )
+            SELECT fecha, canal_venta, ventas, costos, roi, cac, tasa_cambio
+            FROM kpis
             ORDER BY fecha DESC, canal_venta ASC
             """
         )

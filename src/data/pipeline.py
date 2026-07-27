@@ -58,12 +58,18 @@ def seed_channel_rates(session: Session) -> None:
     if session.scalar(select(func.count()).select_from(ChannelRateHistory)):
         return
 
+    # Valores inventados para propósitos de prueba, en un escenario real estos valores 
+    # deberían provenir de una fuente confiable
     defaults = [
         (ChannelEnum.FACEBOOK, Decimal("0.20")),
-        (ChannelEnum.GOOGLE, Decimal("0.35")),
+        (ChannelEnum.TIKTOK, Decimal("0.25")),
         (ChannelEnum.INSTAGRAM, Decimal("0.18")),
         (ChannelEnum.EMAIL, Decimal("0.05")),
-        (ChannelEnum.DIRECT, Decimal("0.01")),
+        (ChannelEnum.DIRECTO, Decimal("0.02")),
+        (ChannelEnum.WEB, Decimal("0.11")),
+        (ChannelEnum.RADIO, Decimal("0.15")),
+        (ChannelEnum.FERIA, Decimal("0.40")),
+        (ChannelEnum.OTRO, Decimal("0.00")),
     ]
     for canal_venta, cpc_base in defaults:
         session.add(
@@ -109,7 +115,7 @@ def refresh_fact_table(session: Session) -> None:
             MarketingVentas.fecha,
             MarketingVentas.canal_venta,
             func.sum(MarketingVentas.monto).label("ventas"),
-            func.count(MarketingVentas.id).label("transaccciones"),
+            func.count(MarketingVentas.id).label("transacciones"),
             func.count(func.distinct(MarketingVentas.cliente)).label("clientes"),
         ).group_by(MarketingVentas.fecha, MarketingVentas.canal_venta)
     ).all()
@@ -119,6 +125,8 @@ def refresh_fact_table(session: Session) -> None:
             MarketingCostos.fecha,
             MarketingCostos.canal_venta,
             func.sum(MarketingCostos.costo).label("costos"),
+            func.sum(MarketingCostos.impresiones).label("impresiones"),
+            func.sum(MarketingCostos.clicks).label("clicks"),
         ).group_by(MarketingCostos.fecha, MarketingCostos.canal_venta)
     ).all()
 
@@ -128,22 +136,22 @@ def refresh_fact_table(session: Session) -> None:
             "costos": 0,
             "impresiones": 0,
             "clicks": 0,
-            "transaccciones": 0,
+            "transacciones": 0,
             "clientes": 0,
         }
     )
 
     for row in ventas_filas:
         key = (row.fecha, row.canal_venta)
-        merged[key]["ventas"] = row.ventas or 0
-        merged[key]["transaccciones"] = int(row.transaccciones or 0)
+        merged[key]["ventas"] = int(row.ventas or 0)
+        merged[key]["transacciones"] = int(row.transacciones or 0)
         merged[key]["clientes"] = int(row.clientes or 0)
 
     for row in costos_filas:
         key = (row.fecha, row.canal_venta)
-        merged[key]["costos"] = row.costos or 0
-        merged[key]["impresiones"] = row.impresiones or 0
-        merged[key]["clicks"] = row.clicks or 0
+        merged[key]["costos"] = int(row.costos or 0)
+        merged[key]["impresiones"] = int(row.impresiones or 0)
+        merged[key]["clicks"] = int(row.clicks or 0)
 
     session.execute(delete(FactCampaignPerformance))
     for (fecha, canal_venta), valores in merged.items():
@@ -169,15 +177,14 @@ def ingest_data(
         if exists:
             continue
 
-        session.add(
-            MarketingVentas(
-                id=record.id,
-                cliente=record.cliente,
-                amount=record.monto,
-                sale_date=record.fecha,
-                channel=normalize_channel(record.canal_venta),
-            )
-        )
+        ventas_kwargs = {
+            "id": record.id,
+            "cliente": record.cliente,
+            "monto": int(record.monto),
+            "fecha": record.fecha,
+            "canal_venta": normalize_channel(record.canal_venta)
+        }
+        session.add(MarketingVentas(**ventas_kwargs))
         inserted_sales += 1
 
     inserted_marketing = 0
@@ -193,16 +200,15 @@ def ingest_data(
         if exists:
             continue
 
-        session.add(
-            MarketingCostos(
-                fecha=record.fecha,
-                canal_venta=record.canal_venta,
-                costo=record.costo,
-                impresiones=record.impresiones,
-                clicks=record.clicks,
-                nuevos_usuarios=record.nuevos_usuarios,
-            )
-        )
+        costos_kwargs = {
+            "fecha": record.fecha,
+            "canal_venta": normalize_channel(record.canal_venta),
+            "costo": int(record.costo),
+            "impresiones": int(record.impresiones),
+            "clicks": int(record.clicks),
+            "nuevos_usuarios": int(record.nuevos_usuarios)
+        }
+        session.add(MarketingCostos(**costos_kwargs))
         inserted_marketing += 1
 
     seed_channel_rates(session)

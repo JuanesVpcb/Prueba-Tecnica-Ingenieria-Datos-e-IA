@@ -59,14 +59,14 @@ WITH kpis AS (
     lowered = user_input.lower()
 
     if intent == "analysis":
-        if "agrupa" in lowered and ("canal" in lowered or "channel" in lowered):
+        if ("agrupa" in lowered or "por" in lowered) and ("canal" in lowered or "channel" in lowered):
             return (
                 f"{base_kpi} "
                 "SELECT canal_venta, AVG(roi) AS avg_roi, AVG(cac) AS avg_cac, AVG(tasa_cambio) AS avg_tasa_cambio "
                 "FROM kpis GROUP BY canal_venta ORDER BY avg_roi DESC"
             )
 
-        if "agrupa" in lowered and ("fecha" in lowered or "date" in lowered):
+        if ("agrupa" in lowered or "por" in lowered) and ("fecha" in lowered or "date" in lowered):
             return (
                 f"{base_kpi} "
                 "SELECT fecha, AVG(roi) AS avg_roi, AVG(cac) AS avg_cac, AVG(tasa_cambio) AS avg_tasa_cambio "

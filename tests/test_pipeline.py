@@ -58,7 +58,7 @@ def test_seed_marketing_from_sql_file(tmp_path) -> None:
     sql_file = tmp_path / "VENTAS_MARKETING.sql"
     sql_file.write_text(
         """
-INSERT INTO VENTAS_MARKETING (id, cliente, monto, fecha, canal_venta)
+INSERT INTO ventas_marketing (id, cliente, monto, fecha, canal_venta)
 VALUES ('5f8414eb-1ede-44fe-b66b-d30ddb7aac27', 'Claude Nawrocki', 42197000, '2025-12-16', 'TIKTOK')
 ON CONFLICT (cliente, fecha) DO NOTHING;
         """.strip(),

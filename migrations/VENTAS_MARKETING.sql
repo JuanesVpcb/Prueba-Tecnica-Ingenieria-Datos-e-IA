@@ -1,4 +1,4 @@
-INSERT INTO VENTAS_MARKETING (id, cliente, monto, fecha, canal_venta)
+INSERT INTO ventas_marketing (id, cliente, monto, fecha, canal_venta)
 VALUES
     ('7b20535f-92e0-4896-8dca-4c26d7a2b3a0', 'Xenos Bosdet', 12535209, '2010-12-28', 'INSTAGRAM'),
     ('a0675173-3ddc-4d03-820f-ad556e95c263', 'Jacenta Woodworth', 4080445, '2003-11-07', 'OTRO'),

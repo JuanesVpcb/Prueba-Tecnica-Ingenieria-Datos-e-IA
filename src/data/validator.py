@@ -29,15 +29,15 @@ CHANNEL_MAPPING = {
     "radio": ChannelEnum.RADIO,
     "feria": ChannelEnum.FERIA,
     "fair": ChannelEnum.FERIA,
-    "directo": ChannelEnum.DIRECT,
-    "direct": ChannelEnum.DIRECT,
-    "dm": ChannelEnum.DIRECT,
+    "directo": ChannelEnum.DIRECTO,
+    "direct": ChannelEnum.DIRECTO,
+    "dm": ChannelEnum.DIRECTO,
 }
 
 
 def normalize_channel(channel: str) -> ChannelEnum:
     normalized = channel.strip().lower()
-    return CHANNEL_MAPPING.get(normalized, ChannelEnum.OTHER)
+    return CHANNEL_MAPPING.get(normalized, ChannelEnum.OTRO)
 
 
 class RecordCosto(BaseModel):

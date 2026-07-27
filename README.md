@@ -29,7 +29,15 @@ ARCHITECTURE.md
 ## Ejecutar local
 
 ```bash
-docker-compose up --build
+docker compose build --no-cache
+docker compose up -d
+```
+
+Para reiniciar y ejecutar nuevamente la aplicación, usar:
+
+```bash
+docker compose build --no-cache app
+docker compose up -d app
 ```
 
 Al iniciar, la app crea tablas con SQLAlchemy y carga el seed `migrations/MARKETING_A.sql` (solo datos, sin DDL) con 1000 registros y el esquema estandarizado: `id`, `cliente`, `monto`, `fecha`, `canal_venta`.
@@ -40,10 +48,42 @@ Al iniciar, la app crea tablas con SQLAlchemy y carga el seed `migrations/MARKET
 - `GET /metrics`: devuelve KPIs actuales (ROI, CAC, tasa de conversión).
 - `POST /chat`: conversación con el agente para consultas y análisis.
 
+### Ejemplo `/data/ingest`
+
+```bash
+curl -sS -X POST http://localhost:8000/data/ingest \
+  -H "Content-Type: application/json" \
+  --data-binary @migrations/INGEST_SAMPLE.json
+```
+
+### Ejemplo `/metrics`
+
+```bash
+curl -sS http://localhost:8000/metrics
+```
+
 ### Ejemplo `/chat`
 
-```json
-{
-  "message": "Analiza ROI por canal y dame recomendaciones"
-}
+Se tienen 3 posibilidades para que el agente de IA realice. Entre estas, se tiene "analysis":
+
+```bash
+curl -sS -X POST http://localhost:8000/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message":"Agrupa por fecha los registros y analiza los resultados."}'
+```
+
+"data_query":
+
+```bash
+curl -sS -X POST http://localhost:8000/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message":"Quiero ver la tabla de datos."}'
+```
+
+y "update":
+
+```bash
+curl -sS -X POST http://localhost:8000/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message":"Quiero cargar nuevos datos al modelo."}'
 ```
