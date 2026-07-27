@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import Engine, create_engine
+from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from src.data.models import Base
@@ -8,7 +8,7 @@ from src.main import app, get_db
 
 
 def test_endpoints_ingest_metrics_chat() -> None:
-    engine = create_engine(
+    engine: Engine = create_engine(
         "sqlite://",
         future=True,
         connect_args={"check_same_thread": False},
@@ -18,7 +18,7 @@ def test_endpoints_ingest_metrics_chat() -> None:
     TestingSessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, future=True)
 
     def override_get_db():
-        db = TestingSessionLocal()
+        db: Session = TestingSessionLocal()
         try:
             yield db
         finally:

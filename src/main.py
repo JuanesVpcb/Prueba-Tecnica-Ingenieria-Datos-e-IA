@@ -6,7 +6,7 @@ from typing import Any
 from fastapi import Depends, FastAPI
 from contextlib import asynccontextmanager
 from pydantic import BaseModel
-from sqlalchemy import create_engine, text
+from sqlalchemy import Engine, Result, create_engine, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from src.ai.agent import InsightAgent
@@ -15,11 +15,11 @@ from src.data.pipeline import ingest_data, seed_marketing_from_sql_file
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./app.db")
 
-engine = create_engine(DATABASE_URL, future=True)
-SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, future=True)
+engine: Engine = create_engine(DATABASE_URL, future=True)
+SessionLocal: sessionmaker[Session] = sessionmaker(bind=engine, autoflush=False, autocommit=False, future=True)
 
-app = FastAPI(title="Insight Extractor & History Tracker", version="1.0.0")
-agent = InsightAgent()
+app: FastAPI = FastAPI(title="Insight Extractor & History Tracker", version="1.0.0")
+agent: InsightAgent = InsightAgent()
 
 
 class ChatRequest(BaseModel):
@@ -32,7 +32,7 @@ class IngestRequest(BaseModel):
 
 
 def get_db():
-    db = SessionLocal()
+    db: Session = SessionLocal()
     try:
         yield db
     finally:
@@ -52,13 +52,13 @@ app.router.lifespan_context = lifespan
 
 @app.post("/data/ingest")
 async def data_ingest(payload: IngestRequest, db: Session = Depends(get_db)):
-    result = ingest_data(db, ventas=payload.ventas_data, costos=payload.costos_data)
+    result: dict[str, int] = ingest_data(db, ventas=payload.ventas_data, costos=payload.costos_data)
     return {"status": "ok", **result}
 
 
 @app.get("/metrics")
 async def metrics(db: Session = Depends(get_db)):
-    rows = db.execute(
+    rows: Result[Any] = db.execute(
         text(
             """
             WITH kpis AS (
@@ -87,5 +87,5 @@ async def metrics(db: Session = Depends(get_db)):
 
 @app.post("/chat")
 async def chat(payload: ChatRequest, db: Session = Depends(get_db)):
-    response = agent.invoke(payload.message, db)
+    response: dict[str, Any] = agent.invoke(payload.message, db)
     return response

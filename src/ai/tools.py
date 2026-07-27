@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from sqlalchemy import text
+from sqlalchemy import Result, text
 from sqlalchemy.orm import Session
 
 READ_ONLY_BLOCKLIST = {
@@ -19,7 +19,7 @@ READ_ONLY_BLOCKLIST = {
 
 
 def validate_read_only_query(query: str) -> None:
-    normalized = query.strip().lower()
+    normalized: str = query.strip().lower()
     if not (normalized.startswith("select") or normalized.startswith("with")):
         raise ValueError("Only SELECT/CTE statements are allowed")
 
@@ -33,12 +33,12 @@ def validate_read_only_query(query: str) -> None:
 
 def execute_read_only_query(session: Session, query: str) -> list[dict[str, Any]]:
     validate_read_only_query(query)
-    result = session.execute(text(query))
+    result: Result[Any] = session.execute(text(query))
     return [dict(row._mapping) for row in result]
 
 
 def query_for_intent(intent: str, user_input: str) -> str:
-    base_kpi = """
+    base_kpi: str = """
 WITH kpis AS (
   SELECT
     fecha,
@@ -56,7 +56,7 @@ WITH kpis AS (
 )
 """.strip()
 
-    lowered = user_input.lower()
+    lowered: str = user_input.lower()
 
     if intent == "analysis":
         if ("agrupa" in lowered or "por" in lowered) and ("canal" in lowered or "channel" in lowered):
@@ -99,8 +99,8 @@ def summarize_result(intent: str, rows: list[dict[str, Any]]) -> str:
         return "No hay datos disponibles todavía. Ejecuta /data/ingest para cargar información."
 
     if intent == "analysis":
-        best = max(rows, key=lambda row: float(row.get("roi", 0) or 0))
-        worst = min(rows, key=lambda row: float(row.get("roi", 0) or 0))
+        best: int = max(rows, key=lambda row: float(row.get("roi", 0) or 0))
+        worst: int = min(rows, key=lambda row: float(row.get("roi", 0) or 0))
         return (
             f"Análisis de desempeño de marketing:\n"
             f"\t+ Total de registros: {len(rows)}.\n"
@@ -111,8 +111,8 @@ def summarize_result(intent: str, rows: list[dict[str, Any]]) -> str:
             f"\t+ Promedio de tasa de cambio: {sum(float(row.get('tasa_cambio', 0) or 0) for row in rows) / len(rows):.2f}.\n"
         )
     
-    i = 1
-    complete_list = ""
+    i: int = 1
+    complete_list: str = ""
     for row in rows:
         complete_list += f"\t+ Registro {i}: "
         complete_list += ", ".join(f"{key}: {row.get(key)}" for key in row.keys())

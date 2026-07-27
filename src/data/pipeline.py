@@ -4,16 +4,17 @@ from collections import defaultdict
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
+from typing import Any
 
-from sqlalchemy import delete, func, select, text
+from sqlalchemy import Result, delete, func, select, text
 from sqlalchemy.orm import Session
 
 from src.data.models import ChannelEnum, ChannelRateHistory, FactCampaignPerformance, MarketingCostos, MarketingVentas
-from src.data.validator import normalize_channel, validar_ventas, validar_costos
+from src.data.validator import normalize_channel, validar_ventas, validar_costos, RecordVentas, RecordCostos
 
 
 def default_ventas() -> list[dict]:
-    today = date.today()
+    today: date = date.today()
     return [
         {
             "id": "5142acb8-1e0c-443e-8eb0-d8915b9eaff4",
@@ -33,7 +34,7 @@ def default_ventas() -> list[dict]:
 
 
 def default_costos() -> list[dict]:
-    today = date.today()
+    today: date = date.today()
     return [
         {
             "costo": "800",
@@ -60,7 +61,7 @@ def seed_channel_rates(session: Session) -> None:
 
     # Valores inventados para propósitos de prueba, en un escenario real estos valores 
     # deberían provenir de una fuente confiable
-    defaults = [
+    defaults: list[tuple[ChannelEnum, Decimal]] = [
         (ChannelEnum.FACEBOOK, Decimal("0.20")),
         (ChannelEnum.TIKTOK, Decimal("0.25")),
         (ChannelEnum.INSTAGRAM, Decimal("0.18")),
@@ -83,7 +84,7 @@ def seed_channel_rates(session: Session) -> None:
 
 
 def add_channel_rate(session: Session, canal_venta: ChannelEnum, cpc_base: Decimal, fecha: date) -> None:
-    existing = session.scalar(
+    existing: ChannelRateHistory | None = session.scalar(
         select(ChannelRateHistory)
         .where(ChannelRateHistory.canal_venta == canal_venta)
         .where(ChannelRateHistory.fecha == fecha)
@@ -110,7 +111,7 @@ def add_channel_rate(session: Session, canal_venta: ChannelEnum, cpc_base: Decim
 
 
 def refresh_fact_table(session: Session) -> None:
-    ventas_filas = session.execute(
+    ventas_filas: Result = session.execute(
         select(
             MarketingVentas.fecha,
             MarketingVentas.canal_venta,
@@ -120,7 +121,7 @@ def refresh_fact_table(session: Session) -> None:
         ).group_by(MarketingVentas.fecha, MarketingVentas.canal_venta)
     ).all()
 
-    costos_filas = session.execute(
+    costos_filas: Result = session.execute(
         select(
             MarketingCostos.fecha,
             MarketingCostos.canal_venta,
@@ -142,13 +143,13 @@ def refresh_fact_table(session: Session) -> None:
     )
 
     for row in ventas_filas:
-        key = (row.fecha, row.canal_venta)
+        key: tuple[date, ChannelEnum] = (row.fecha, row.canal_venta)
         merged[key]["ventas"] = int(row.ventas or 0)
         merged[key]["transacciones"] = int(row.transacciones or 0)
         merged[key]["clientes"] = int(row.clientes or 0)
 
     for row in costos_filas:
-        key = (row.fecha, row.canal_venta)
+        key: tuple[date, ChannelEnum] = (row.fecha, row.canal_venta)
         merged[key]["costos"] = int(row.costos or 0)
         merged[key]["impresiones"] = int(row.impresiones or 0)
         merged[key]["clicks"] = int(row.clicks or 0)
@@ -163,21 +164,21 @@ def ingest_data(
     ventas: list[dict] | None = None,
     costos: list[dict] | None = None,
 ) -> dict:
-    ventas_registro = validar_ventas(ventas or default_ventas())
-    costos_registro = validar_costos(costos or default_costos())
+    ventas_registro: list[RecordVentas] = validar_ventas(ventas or default_ventas())
+    costos_registro: list[RecordCostos] = validar_costos(costos or default_costos())
 
-    inserted_sales = 0
-    seen_sales = set()
+    inserted_sales: int = 0
+    seen_sales: set[str] = set()
     for record in ventas_registro:
         if record.id in seen_sales:
             continue
         seen_sales.add(record.id)
 
-        exists = session.scalar(select(MarketingVentas.id).where(MarketingVentas.id == record.id))
+        exists: str | None = session.scalar(select(MarketingVentas.id).where(MarketingVentas.id == record.id))
         if exists:
             continue
 
-        ventas_kwargs = {
+        ventas_kwargs: dict[str, Any] = {
             "id": record.id,
             "cliente": record.cliente,
             "monto": int(record.monto),
@@ -187,20 +188,20 @@ def ingest_data(
         session.add(MarketingVentas(**ventas_kwargs))
         inserted_sales += 1
 
-    inserted_marketing = 0
-    seen_marketing = set()
+    inserted_marketing: int = 0
+    seen_marketing: set[tuple[date, ChannelEnum]] = set()
     for record in costos_registro:
         key = (record.fecha, record.canal_venta)
         if key in seen_marketing:
             continue
         seen_marketing.add(key)
 
-        exists = session.scalar(select(MarketingCostos.fecha)
-                                .where((MarketingCostos.fecha, MarketingCostos.canal_venta) == key))
+        exists: date | None = session.scalar(select(MarketingCostos.fecha)
+                                     .where((MarketingCostos.fecha, MarketingCostos.canal_venta) == key))
         if exists:
             continue
 
-        costos_kwargs = {
+        costos_kwargs: dict[str, Any] = {
             "fecha": record.fecha,
             "canal_venta": normalize_channel(record.canal_venta),
             "costo": int(record.costo),

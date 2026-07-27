@@ -29,8 +29,8 @@ ARCHITECTURE.md
 ## Ejecutar local
 
 ```bash
-docker compose build --no-cache
-docker compose up -d
+docker-compose up db
+docker-compose up app
 ```
 
 Para reiniciar y ejecutar nuevamente la aplicación, usar:

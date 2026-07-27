@@ -13,15 +13,15 @@ class Base(DeclarativeBase):
 
 
 class ChannelEnum(str, Enum):
-    FACEBOOK = "FACEBOOK"
-    INSTAGRAM = "INSTAGRAM"
-    TIKTOK = "TIKTOK"
-    EMAIL = "EMAIL"
-    WEB = "WEB"
-    RADIO = "RADIO"
-    FERIA = "FERIA"
-    DIRECTO = "DIRECTO"
-    OTRO = "OTRO"
+    FACEBOOK: str = "FACEBOOK"
+    INSTAGRAM: str = "INSTAGRAM"
+    TIKTOK: str = "TIKTOK"
+    EMAIL: str = "EMAIL"
+    WEB: str = "WEB"
+    RADIO: str = "RADIO"
+    FERIA: str = "FERIA"
+    DIRECTO: str = "DIRECTO"
+    OTRO: str = "OTRO"
 
 
 class MarketingCostos(Base):

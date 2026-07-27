@@ -27,16 +27,16 @@ class InsightAgent:
         self.graph = self._build_graph()
 
     def _classify(self, state: AgentState) -> AgentState:
-        text = state["user_input"].lower()
+        text: str = state["user_input"].lower()
         if any(token in text for token in ("actualiza", "ingesta", "refresh", "sube", "carga", "update", "refresca", "subir", "cargar",
                                            "actualizar", "ingestar", "refrescar", "subiendo", "cargando")):
-            intent = "update"
+            intent: str = "update"
         elif any(token in text for token in ("estrategia", "recomendación", "roi", "cac", "conversion", "retencion", "estadisticas", 
                                              "analisis", "analiza", "analizar", "stats", "metricas", "metrics", "tasa", "rate",
                                              "agrupa", "insight", "sugerencia", "recomienda", "agregada", "por")):
-            intent = "analysis"
+            intent: str = "analysis"
         else:
-            intent = "data_query"
+            intent: str = "data_query"
         return {"intent": intent}
 
     def _build_sql(self, state: AgentState) -> AgentState:
@@ -51,12 +51,12 @@ class InsightAgent:
 
     def _reason(self, state: AgentState) -> AgentState:
         if state["intent"] == "update":
-            text = "Para actualizar datos, usa el endpoint /data/ingest."
-            payload = {"intent": "update", "action": "call_data_ingest"}
+            text: str = "Para actualizar datos, usa el endpoint /data/ingest."
+            payload: dict[str, Any] = {"intent": "update", "action": "call_data_ingest"}
             return {"answer_text": text, "answer_json": payload}
 
-        text = summarize_result(state["intent"], state.get("rows", []))
-        payload = {
+        text: str = summarize_result(state["intent"], state.get("rows", []))
+        payload: dict[str, Any] = {
             "intent": state["intent"],
             "sql": state.get("sql", ""),
             "rows": state.get("rows", []),

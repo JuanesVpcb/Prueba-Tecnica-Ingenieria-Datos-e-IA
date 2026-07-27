@@ -36,7 +36,7 @@ CHANNEL_MAPPING = {
 
 
 def normalize_channel(channel: str) -> ChannelEnum:
-    normalized = channel.strip().lower()
+    normalized: str = channel.strip().lower()
     return CHANNEL_MAPPING.get(normalized, ChannelEnum.OTRO)
 
 

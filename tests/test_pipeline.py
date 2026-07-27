@@ -1,4 +1,6 @@
-from sqlalchemy import create_engine, func, select
+from pathlib import Path
+
+from sqlalchemy import Engine, Sequence, create_engine, func, select
 from sqlalchemy.orm import Session
 
 from src.data.models import Base, FactCampaignPerformance, MarketingVentas, MarketingCostos
@@ -38,24 +40,27 @@ def test_ingest_deduplicates_and_builds_fact() -> None:
     ]
 
     with Session(engine) as session:
-        result = ingest_data(session, ventas=ventas, costos=costos)
+        result: dict[str, int] = ingest_data(session, ventas=ventas, costos=costos)
         assert result["inserted_sales"] == 1
         assert result["inserted_marketing"] == 1
 
-        sales_count = session.scalar(select(func.count()).select_from(MarketingCostos))
+        sales_count: int = session.scalar(select(func.count()).select_from(MarketingCostos))
         assert sales_count == 1
 
-        facts = session.scalars(select(FactCampaignPerformance)).all()
+        facts: Sequence[FactCampaignPerformance] = session.scalars(select(FactCampaignPerformance)).all()
         assert len(facts) == 1
         assert float(facts[0].ventas) == 20000.0
         assert float(facts[0].costos) == 100.0
+        assert float(facts[0].impresiones) == 100.0
+        assert float(facts[0].clicks) == 10.0
+        assert float(facts[0].nuevos_usuarios) == 5.0
 
 
-def test_seed_marketing_from_sql_file(tmp_path) -> None:
-    engine = create_engine("sqlite:///:memory:", future=True)
+def test_seed_marketing_from_sql_file(tmp_path: Path) -> None:
+    engine: Engine = create_engine("sqlite:///:memory:", future=True)
     Base.metadata.create_all(engine)
 
-    sql_file = tmp_path / "VENTAS_MARKETING.sql"
+    sql_file: Path = tmp_path / "VENTAS_MARKETING.sql"
     sql_file.write_text(
         """
 INSERT INTO ventas_marketing (id, cliente, monto, fecha, canal_venta)
@@ -66,7 +71,7 @@ ON CONFLICT (cliente, fecha) DO NOTHING;
     )
 
     with Session(engine) as session:
-        loaded = seed_marketing_from_sql_file(session, str(sql_file))
+        loaded: bool = seed_marketing_from_sql_file(session, str(sql_file))
         assert loaded is True
-        rows = session.scalar(select(func.count()).select_from(MarketingVentas))
+        rows: int = session.scalar(select(func.count()).select_from(MarketingVentas))
         assert rows == 1
