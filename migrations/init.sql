@@ -1,0 +1,3 @@
+-- SQLAlchemy create_all maneja la creación de tablas.
+-- Los datos iniciales de marketing (1000 registros) se cargan desde migrations/VENTAS_MARKETING.sql
+-- en formato estandarizado: id, cliente, monto, fecha, canal_venta.
